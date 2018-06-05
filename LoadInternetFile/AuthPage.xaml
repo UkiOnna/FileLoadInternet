@@ -1,0 +1,18 @@
+﻿<Page x:Class="LoadInternetFile.AuthPage"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+      xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+      xmlns:local="clr-namespace:LoadInternetFile"
+      mc:Ignorable="d" 
+      d:DesignHeight="300" d:DesignWidth="300"
+      Title="AuthPage">
+
+    <Grid>
+        <TextBox Name="Site" HorizontalAlignment="Left" Height="23" Margin="89,54,0,0" TextWrapping="Wrap" Text="ftp://ftp.dlptest.com/" VerticalAlignment="Top" Width="120"/>
+        <TextBox Name="login" HorizontalAlignment="Left" Height="23" Margin="89,101,0,0" TextWrapping="Wrap" Text="dlpuser@dlptest.com" VerticalAlignment="Top" Width="120"/>
+        <TextBox Name="password" HorizontalAlignment="Left" Height="23" Margin="89,147,0,0" TextWrapping="Wrap" Text="eiTqR7EMZD5zy7M" VerticalAlignment="Top" Width="120"/>
+        <Button Content="Connect" HorizontalAlignment="Left" Margin="107,208,0,0" VerticalAlignment="Top" Width="75" Click="ConnectClick"/>
+        <CheckBox Content="Safe" HorizontalAlignment="Left" Margin="24,254,0,0" VerticalAlignment="Top"/>
+    </Grid>
+</Page>
