@@ -21,13 +21,14 @@ namespace LoadInternetFile
     public partial class FileElement : UserControl
     {
         public string Type { get; private set; }
-        //имя файла
-        public FileElement(Image img,string text,string type)
+         public string Name { get; set; }//имя файла
+        public FileElement(Image img,string text,string type,string name)
         {
             InitializeComponent();
             image.Source = img.Source;
-            fileNAme.Text = text;
+            fileNAme.Text = name;
             this.Type = type;
+            Name = name;
         }
     }
 }

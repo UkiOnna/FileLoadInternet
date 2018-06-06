@@ -27,50 +27,55 @@ namespace LoadInternetFile
         FtpWebRequest request;
         List<string> files;
         UserInfo userInfo;
-        public DirectoryPage(Window win,FtpWebRequest req,UserInfo info)
+        string currentSite;
+        public DirectoryPage(Window win, FtpWebRequest req, UserInfo info)
         {
             InitializeComponent();
             window = win;
             request = req;
             userInfo = info;
-            GetDirect();
-            
+            currentSite = info.Site;
+            GetDirect(req);
+
         }
-        public async void GetDirect()
+        public async void GetDirect(FtpWebRequest req)
         {
-            string file = await DownloadFiles();
+            listBox.Items.Clear();
+            listBox.Items.Refresh();
+            string file = await DownloadFiles(req);
             files = file.Split(new char[] { '\n' }, StringSplitOptions.RemoveEmptyEntries).ToList();
-            foreach(var s in files) {
+            foreach (var s in files)
+            {
                 if (s.ToList()[0] == 'd')
                 {
-                    //тебе сюда
                     var str = s.Split(new char[] { ' ' }, StringSplitOptions.RemoveEmptyEntries).Last();
                     string name = str.Substring(0, str.Length - 1);
                     Image image = new Image();
                     s.Split(' ');
                     image.Source = BitmapFrame.Create(new Uri(Directory.GetCurrentDirectory() + "/icn.png"));
-                    listBox.Items.Add(new FileElement(image, s,"folder"));
+                    listBox.Items.Add(new FileElement(image, s, "folder", name));
                 }
                 else
                 {
+                    var str = s.Split(new char[] { ' ' }, StringSplitOptions.RemoveEmptyEntries).Last();
+                    string name = str.Substring(0, str.Length - 1);
                     Image image = new Image();
                     image.Source = BitmapFrame.Create(new Uri(Directory.GetCurrentDirectory() + "/file.png"));
-                    listBox.Items.Add(new FileElement(image, s,"file"));//имя файла
+                    listBox.Items.Add(new FileElement(image, s, "file", name));//имя файла
                 }
-                //image.Source = Directory.GetCurrentDirectory() + "file.png";
+
             }
         }
 
-        private Task<string> DownloadFiles()
+        private Task<string> DownloadFiles(FtpWebRequest req)
         {
             return Task.Run(() =>
             {
- 
-                FtpWebResponse fgtpWebResponse = (FtpWebResponse)request.GetResponse();
+                FtpWebResponse fgtpWebResponse = (FtpWebResponse)req.GetResponse();
                 using (var stream = fgtpWebResponse.GetResponseStream())
                 {
-                    
-                    byte[] buffer = new byte[5012];
+
+                    byte[] buffer = new byte[100000];
                     int bytes = stream.Read(buffer, 0, buffer.Length);
                     string data = Encoding.Default.GetString(buffer);
                     return data;
@@ -86,40 +91,93 @@ namespace LoadInternetFile
                 MessageBoxResult res = MessageBox.Show("Хотите загрузить себе этот файл", "Question", MessageBoxButton.YesNo, MessageBoxImage.Warning);
                 if (MessageBoxResult.No == res)
                 {
-                    //do no stuff
+
                 }
                 else
                 {
                     SaveFileDialog openFileDialog = new SaveFileDialog();
                     if (openFileDialog.ShowDialog() == true)
                     {
-                        string path  = openFileDialog.FileName;
-                        await DownloadContent(path);
+                        string path = openFileDialog.FileName;
+                        await DownloadContent(path, el.Name);
                     }
-                    //do yes stuff
                 }
+            }
+            else
+            {
+                FtpWebRequest refreshReequest = (FtpWebRequest)WebRequest.Create(userInfo.Site + @"\" + el.Name);
+                refreshReequest.Method = WebRequestMethods.Ftp.ListDirectoryDetails;
+                refreshReequest.Credentials = new NetworkCredential(userInfo.Login, userInfo.Password);
+                GetDirect(refreshReequest);
+                currentSite = userInfo.Site + @"\" + el.Name;
             }
         }
 
-        private Task DownloadContent(string path)
+        private Task DownloadContent(string path, string name)
         {
             return Task.Run(() =>
             {
-                FtpWebRequest ftpWebRequest = (FtpWebRequest)WebRequest.Create(userInfo.Site+ "/.txt");//имя файла
-                ftpWebRequest.Method = WebRequestMethods.Ftp.DownloadFile;
-                ftpWebRequest.Credentials = new NetworkCredential(userInfo.Login, userInfo.Password);
-               
-              FtpWebResponse fgtpWebResponse = (FtpWebResponse)ftpWebRequest.GetResponse();
-                using (var stream = fgtpWebResponse.GetResponseStream())
+                try
                 {
+                    FtpWebRequest ftpWebRequest = (FtpWebRequest)WebRequest.Create(userInfo.Site + "/" + name);//имя файла
+                    ftpWebRequest.Method = WebRequestMethods.Ftp.DownloadFile;
+                    ftpWebRequest.Credentials = new NetworkCredential(userInfo.Login, userInfo.Password);
 
-                    byte[] buffer = new byte[10000];
-                    int bytes = stream.Read(buffer, 0, buffer.Length);
-                    File.WriteAllBytes(path,buffer);
-                    //string data = Encoding.Default.GetString(buffer);
-                    //return ;
+                    FtpWebRequest ftpWebRequestSize = (FtpWebRequest)WebRequest.Create(userInfo.Site + name);//имя файла  //адина
+                    ftpWebRequestSize.Method = WebRequestMethods.Ftp.GetFileSize;
+                    ftpWebRequestSize.Credentials = new NetworkCredential(userInfo.Login, userInfo.Password);
+                    long fileSize;
+                    FtpWebResponse ftpFileSuzeResponse = (FtpWebResponse)ftpWebRequestSize.GetResponse();
+
+                    fileSize = ftpFileSuzeResponse.ContentLength;
+
+                    FtpWebResponse fgtpWebResponse = (FtpWebResponse)ftpWebRequest.GetResponse();
+                    using (var stream = fgtpWebResponse.GetResponseStream())
+                    {
+
+                        byte[] buffer = new byte[fileSize];
+                        int bytes = stream.Read(buffer, 0, buffer.Length);
+                        File.WriteAllBytes(path, buffer);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show(ex.Message);
+                }
+            });
+        }
+
+        private async void UploadButtonClick(object sender, RoutedEventArgs e)
+        {
+            OpenFileDialog dialog = new OpenFileDialog();
+
+            if (dialog.ShowDialog() == true)
+            {
+                await UploadContent(dialog.FileName);
+            }
+        }
+
+        private Task UploadContent(string name)
+        {
+            return Task.Run(() =>
+            {
+                FileInfo fileInfo = new FileInfo(name);
+
+
+                byte[] data = File.ReadAllBytes(name);
+
+                FtpWebRequest temp = (FtpWebRequest)WebRequest.Create(new Uri($@"{currentSite}/{fileInfo.Name}"));
+                temp.Method = WebRequestMethods.Ftp.UploadFile;
+                temp.Credentials = new NetworkCredential(userInfo.Login, userInfo.Password);
+                temp.ContentLength = data.Length;
+                FtpWebResponse response = (FtpWebResponse)temp.GetResponse();
+
+                using (var stream = temp.GetRequestStream())
+                {
+                    stream.Write(data, 0, data.Length);
                 }
             });
         }
     }
 }
+

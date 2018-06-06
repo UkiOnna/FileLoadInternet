@@ -10,6 +10,7 @@
 
     <Grid>
         <ListBox Name="listBox" HorizontalAlignment="Left" Height="280" Margin="10,10,0,0" VerticalAlignment="Top" Width="395" MouseDoubleClick="DoubleClickFile"/>
+        <Button Content="Загрузить" HorizontalAlignment="Left" Margin="415,81,0,0" VerticalAlignment="Top" Width="75" Click="UploadButtonClick"/>
 
     </Grid>
 </Page>

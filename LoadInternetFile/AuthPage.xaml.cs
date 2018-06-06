@@ -22,6 +22,7 @@ namespace LoadInternetFile
     public partial class AuthPage : Page
     {
         Window window;
+        bool isProtected;
         public AuthPage(Window win)
         {
             InitializeComponent();
@@ -32,14 +33,17 @@ namespace LoadInternetFile
         {
             try
             {
+                isProtected = (bool)checkSafe.IsChecked;
                 FtpWebRequest ftpWebRequest = (FtpWebRequest)WebRequest.Create(Site.Text);
                 ftpWebRequest.Method = WebRequestMethods.Ftp.ListDirectoryDetails;
                 ftpWebRequest.Credentials = new NetworkCredential(login.Text, password.Text);
+                ftpWebRequest.UsePassive = isProtected;
                 FtpWebResponse fgtpWebResponse = (FtpWebResponse)ftpWebRequest.GetResponse();
                 UserInfo info = new UserInfo();
                 info.Login = login.Text;
                 info.Password = password.Text;
                 info.Site = Site.Text;
+               
                 window.Content = new DirectoryPage(window, ftpWebRequest,info);
             }
             catch(Exception ex)
